@@ -1,0 +1,37 @@
+server:
+    port: 8080
+spring:
+    jpa:
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+        hibernate:
+            ddl-auto: none
+        open-in-view: false
+multitenancy:
+    datasource-cache:
+        maximumSize: 100
+        expireAfterAccess: 10
+    master:
+        repository:
+            packages: com.tistory.jaimemin.multidatasourcejpa.multitenancy.repository
+        entityManager:
+            packages: com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity
+        datasource:
+            url: jdbc:postgresql://localhost:5432/master
+            username: postgres
+            password: 1q2w3e4r
+        liquibase:
+            enabled: false
+    tenant:
+        repository:
+            packages: com.tistory.jaimemin.multidatasourcejpa.multitenancy.repository
+        entityManager:
+            packages: com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity
+        datasource:
+            hikari:
+                maximumPoolSize: 2
+                minimumIdle: 0
+                idleTimeout: 30000
+        liquibase:
+            changeLog: classpath:db/changelog/db.changelog-tenant.yaml

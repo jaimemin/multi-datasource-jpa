@@ -1,0 +1,24 @@
+databaseChangeLog:
+
+- changeSet:
+    id: tenant-1
+    author: jaimemin
+    changes:
+    - createTable:
+        tableName: data_source_config
+        columns:
+        - column:
+            name: tenant_id
+            type: VARCHAR(100)
+            constraints:
+              primaryKey: true
+              primaryKeyName: tenant_pkey
+        - column:
+            name: url
+            type: VARCHAR(256)
+        - column:
+            name: db_name
+            type: VARCHAR(100)
+        - column:
+            name: password
+            type: VARCHAR(100)

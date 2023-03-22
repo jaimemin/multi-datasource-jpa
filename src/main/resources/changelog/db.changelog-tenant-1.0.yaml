@@ -1,0 +1,33 @@
+databaseChangeLog:
+
+- changeSet:
+    id: product
+    author: jaimemin
+    changes:
+    - createTable:
+        tableName: product
+        columns:
+        - column:
+            name: id
+            type: BIGINT
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: branch_pkey
+        - column:
+            name: product_name
+            type: VARCHAR(100)
+            constraints:
+              nullable: false
+        - column:
+            name: quantity
+            type: INTEGER
+            constraints:
+              nullable: false
+        - column:
+            name: created_by
+            type: VARCHAR(256)
+    - sql:
+        dbms: 'postgresql'
+        sql: >-
+            ALTER SEQUENCE product_id_seq RESTART WITH 100000;
