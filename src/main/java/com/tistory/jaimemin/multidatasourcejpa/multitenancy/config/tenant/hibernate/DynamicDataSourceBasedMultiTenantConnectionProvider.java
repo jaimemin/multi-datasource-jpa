@@ -3,8 +3,8 @@ package com.tistory.jaimemin.multidatasourcejpa.multitenancy.config.tenant.hiber
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.RemovalListener;
-import com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity.DataSourceEntity;
-import com.tistory.jaimemin.multidatasourcejpa.multitenancy.repository.DataSourceRepository;
+import com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity.DataSourceManagement;
+import com.tistory.jaimemin.multidatasourcejpa.multitenancy.repository.DataSourceManagementRepository;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.engine.jdbc.connections.spi.AbstractDataSourceBasedMultiTenantConnectionProviderImpl;
@@ -32,10 +32,7 @@ public class DynamicDataSourceBasedMultiTenantConnectionProvider extends Abstrac
     private DataSourceProperties dataSourceProperties;
 
     @Autowired
-    private DataSourceRepository dataSourceRepository;
-
-    @Value("${multitenancy.tenant.datasource.url-prefix}")
-    private String urlPrefix;
+    private DataSourceManagementRepository dataSourceManagementRepository;
 
     @Value("${multitenancy.datasource-cache.maximumSize:100}")
     private Long maximumSize;
@@ -55,10 +52,10 @@ public class DynamicDataSourceBasedMultiTenantConnectionProvider extends Abstrac
                     ds.close(); // tear down properly
                 })
                 .build(tenantId -> {
-                            DataSourceEntity tenant = dataSourceRepository.findByTenantId(tenantId)
+                            DataSourceManagement dataSourceManagement = dataSourceManagementRepository.findByTenantId(tenantId)
                                     .orElseThrow(() -> new RuntimeException("해당 테넌트가 존재하지 않습니다: " + tenantId));
 
-                            return createAndConfigureDataSource(tenant);
+                            return createAndConfigureDataSource(dataSourceManagement);
                         }
                 );
     }
@@ -77,11 +74,11 @@ public class DynamicDataSourceBasedMultiTenantConnectionProvider extends Abstrac
         }
     }
 
-    private DataSource createAndConfigureDataSource(DataSourceEntity dataSource) {
+    private DataSource createAndConfigureDataSource(DataSourceManagement dataSource) {
         HikariDataSource ds = dataSourceProperties.initializeDataSourceBuilder()
                 .type(HikariDataSource.class)
                 .build();
-        ds.setUsername(dataSource.getUsername());
+        ds.setUsername(dataSource.getDbName());
         ds.setPassword(dataSource.getPassword());
         ds.setJdbcUrl(dataSource.getUrl());
 

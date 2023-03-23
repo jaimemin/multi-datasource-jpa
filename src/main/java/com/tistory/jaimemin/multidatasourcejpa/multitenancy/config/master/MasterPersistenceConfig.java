@@ -46,7 +46,7 @@ public class MasterPersistenceConfig {
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean masterEntityManagerFactory(@Qualifier("masterDataSource")DataSource dataSource) {
+    public LocalContainerEntityManagerFactoryBean masterEntityManagerFactory(@Qualifier("masterDataSource") DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
         factoryBean.setPersistenceUnitName("master-persistence-unit");
         factoryBean.setPackagesToScan(entityPackages);

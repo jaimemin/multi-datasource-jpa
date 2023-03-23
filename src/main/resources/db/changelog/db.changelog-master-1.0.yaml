@@ -1,7 +1,7 @@
 databaseChangeLog:
 
 - changeSet:
-    id: tenant-1
+    id: tenant
     author: jaimemin
     changes:
     - createTable:

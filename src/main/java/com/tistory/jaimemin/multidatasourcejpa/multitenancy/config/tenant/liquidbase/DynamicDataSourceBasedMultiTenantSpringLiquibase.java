@@ -1,7 +1,7 @@
 package com.tistory.jaimemin.multidatasourcejpa.multitenancy.config.tenant.liquidbase;
 
-import com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity.DataSourceEntity;
-import com.tistory.jaimemin.multidatasourcejpa.multitenancy.repository.DataSourceRepository;
+import com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity.DataSourceManagement;
+import com.tistory.jaimemin.multidatasourcejpa.multitenancy.repository.DataSourceManagementRepository;
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.Getter;
@@ -29,22 +29,22 @@ import java.util.Collection;
 public class DynamicDataSourceBasedMultiTenantSpringLiquibase implements InitializingBean, ResourceLoaderAware {
 
     @Autowired
-    private DataSourceRepository dataSourceRepository;
+    private DataSourceManagementRepository dataSourceManagementRepository;
 
     @Autowired
-    @Qualifier("tenantLiquidbaseProperties")
+    @Qualifier("tenantLiquibaseProperties")
     private LiquibaseProperties liquibaseProperties;
 
     private ResourceLoader resourceLoader;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.runOnAllTenants(dataSourceRepository.findAll());
+        this.runOnAllTenants(dataSourceManagementRepository.findAll());
     }
 
-    protected void runOnAllTenants(Collection<DataSourceEntity> dataSources) {
-        for (DataSourceEntity dataSource : dataSources) {
-            try (Connection connection = DriverManager.getConnection(dataSource.getUrl(), dataSource.getUsername(), dataSource.getPassword())) {
+    protected void runOnAllTenants(Collection<DataSourceManagement> dataSources) {
+        for (DataSourceManagement dataSource : dataSources) {
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl() + dataSource.getDbName(), dataSource.getDbName(), dataSource.getPassword())) {
                 DataSource tenantDataSource = new SingleConnectionDataSource(connection, false);
                 SpringLiquibase liquibase = this.getSpringLiquibase(tenantDataSource);
                 liquibase.afterPropertiesSet();

@@ -18,16 +18,16 @@ multitenancy:
         entityManager:
             packages: com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity
         datasource:
-            url: jdbc:postgresql://localhost:5432/master
-            username: postgres
-            password: 1q2w3e4r
+            url: jdbc:postgresql://localhost:5432/multi_tenancy_master
+            username: trycatch
+            password: catch!123
         liquibase:
             enabled: false
     tenant:
         repository:
-            packages: com.tistory.jaimemin.multidatasourcejpa.multitenancy.repository
+            packages: com.tistory.jaimemin.multidatasourcejpa.tenant.repository
         entityManager:
-            packages: com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity
+            packages: com.tistory.jaimemin.multidatasourcejpa.tenant.entity
         datasource:
             hikari:
                 maximumPoolSize: 2
