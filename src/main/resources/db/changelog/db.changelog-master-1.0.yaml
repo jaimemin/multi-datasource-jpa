@@ -20,5 +20,11 @@ databaseChangeLog:
             name: db_name
             type: VARCHAR(100)
         - column:
+            name: username
+            type: VARCHAR(100)
+        - column:
             name: password
+            type: VARCHAR(100)
+        - column:
+            name: driver_class_name
             type: VARCHAR(100)

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -77,10 +78,11 @@ public class DynamicDataSourceBasedMultiTenantConnectionProvider extends Abstrac
     private DataSource createAndConfigureDataSource(DataSourceManagement dataSource) {
         HikariDataSource ds = dataSourceProperties.initializeDataSourceBuilder()
                 .type(HikariDataSource.class)
+                .driverClassName(dataSource.getDriverClassName())
                 .build();
-        ds.setUsername(dataSource.getDbName());
+        ds.setUsername(dataSource.getUsername());
         ds.setPassword(dataSource.getPassword());
-        ds.setJdbcUrl(dataSource.getUrl());
+        ds.setJdbcUrl(dataSource.getUrl() + dataSource.getDbName());
 
         return ds;
     }

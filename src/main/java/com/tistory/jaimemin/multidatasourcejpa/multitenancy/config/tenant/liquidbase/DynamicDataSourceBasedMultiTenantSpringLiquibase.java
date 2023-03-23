@@ -44,7 +44,7 @@ public class DynamicDataSourceBasedMultiTenantSpringLiquibase implements Initial
 
     protected void runOnAllTenants(Collection<DataSourceManagement> dataSources) {
         for (DataSourceManagement dataSource : dataSources) {
-            try (Connection connection = DriverManager.getConnection(dataSource.getUrl() + dataSource.getDbName(), dataSource.getDbName(), dataSource.getPassword())) {
+            try (Connection connection = DriverManager.getConnection(dataSource.getUrl() + dataSource.getDbName(), dataSource.getUsername(), dataSource.getPassword())) {
                 DataSource tenantDataSource = new SingleConnectionDataSource(connection, false);
                 SpringLiquibase liquibase = this.getSpringLiquibase(tenantDataSource);
                 liquibase.afterPropertiesSet();

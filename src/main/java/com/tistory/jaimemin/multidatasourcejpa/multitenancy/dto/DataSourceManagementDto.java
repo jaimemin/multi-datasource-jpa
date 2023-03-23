@@ -11,5 +11,9 @@ public class DataSourceManagementDto {
 
     private String dbName;
 
+    private String username;
+
     private String password;
+
+    private String driverClassName;
 }

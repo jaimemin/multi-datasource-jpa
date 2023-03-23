@@ -5,7 +5,6 @@ import com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity.DataSourceMan
 import com.tistory.jaimemin.multidatasourcejpa.multitenancy.repository.DataSourceManagementRepository;
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.spring.SpringLiquibase;
-import liquibase.repackaged.org.apache.commons.collections4.functors.ExceptionClosure;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,9 +18,11 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 @Slf4j
@@ -46,20 +47,25 @@ public class DataSourceManagementService {
     }
 
     public DataSourceManagement findByTenantId(String tenantId) {
-        return repository.findByTenantId(tenantId)
-                .orElseThrow(() -> new RuntimeException("테넌트 " + tenantId + "가 존재하지 않습니다."));
+        return repository.findByTenantId(tenantId).orElse(null);
     }
 
     public void createDataSource(DataSourceManagementDto dataSourceManagementDto) {
         try {
-            createDatabase(dataSourceManagementDto.getDbName(), dataSourceManagementDto.getPassword());
-        } catch (DataAccessException e) {
+            if (isMariaDB(dataSourceManagementDto)) {
+                createMySqlDatabase(dataSourceManagementDto);
+            } else {
+                createPostgresDatabase(dataSourceManagementDto);
+            }
+        } catch (DataAccessException | ClassNotFoundException e) {
             log.error("[createDataSource] ERROR ", e);
 
             throw new RuntimeException(dataSourceManagementDto.getDbName() + " DB를 생성하는 도중 에러가 발생했습니다.");
         }
 
-        try (Connection connection = DriverManager.getConnection(dataSourceManagementDto.getUrl() + dataSourceManagementDto.getDbName(), dataSourceManagementDto.getDbName(), dataSourceManagementDto.getPassword())) {
+        try (Connection connection = DriverManager.getConnection(dataSourceManagementDto.getUrl() + dataSourceManagementDto.getDbName()
+                , dataSourceManagementDto.getUsername()
+                , dataSourceManagementDto.getPassword())) {
             DataSource tenantDataSource = new SingleConnectionDataSource(connection, false);
             runLiquibase(tenantDataSource);
         } catch (SQLException | LiquibaseException e) {
@@ -72,33 +78,54 @@ public class DataSourceManagementService {
                 .tenantId(dataSourceManagementDto.getTenantId())
                 .url(dataSourceManagementDto.getUrl())
                 .dbName(dataSourceManagementDto.getDbName())
+                .username(dataSourceManagementDto.getUsername())
                 .password(dataSourceManagementDto.getPassword())
+                .driverClassName(dataSourceManagementDto.getDriverClassName())
                 .build());
     }
 
-    private void createDatabase(String dbName, String password) {
+    private static boolean isMariaDB(DataSourceManagementDto dataSourceManagementDto) {
+        return "org.mariadb.jdbc.Driver".equals(dataSourceManagementDto.getDriverClassName());
+    }
+
+    private void createPostgresDatabase(DataSourceManagementDto dto) {
         try {
-            jdbcTemplate.execute((StatementCallback<Boolean>) stmt -> stmt.execute("CREATE DATABASE " + dbName));
+            jdbcTemplate.execute((StatementCallback<Boolean>) stmt -> stmt.execute("CREATE DATABASE " + dto.getDbName()));
         } catch (Exception e) {
             log.error("[createDatabase create db] {}", e.getMessage());
         }
 
         try {
-            jdbcTemplate.execute((StatementCallback<Boolean>) stmt -> stmt.execute("CREATE USER " + dbName + " WITH PASSWORD '" + password + "'"));
+            jdbcTemplate.execute((StatementCallback<Boolean>) stmt -> stmt.execute("CREATE USER " + dto.getUsername() + " WITH PASSWORD '" + dto.getPassword() + "'"));
         } catch (Exception e) {
             log.error("[createDatabase create user] {}", e.getMessage());
         }
 
         try {
-            jdbcTemplate.execute((StatementCallback<Boolean>) stmt -> stmt.execute("GRANT ALL PRIVILEGES ON DATABASE " + dbName + " TO " + dbName));
+            jdbcTemplate.execute((StatementCallback<Boolean>) stmt -> stmt.execute("GRANT ALL PRIVILEGES ON DATABASE " + dto.getDbName() + " TO " + dto.getUsername()));
         } catch (Exception e) {
             log.error("[createDatabase privilege db] {}", e.getMessage());
         }
 
         try {
-            jdbcTemplate.execute((StatementCallback<Boolean>) stmt -> stmt.execute("ALTER DATABASE " + dbName + " OWNER TO " + dbName));
+            jdbcTemplate.execute((StatementCallback<Boolean>) stmt -> stmt.execute("ALTER DATABASE " + dto.getDbName() + " OWNER TO " + dto.getUsername()));
         } catch (Exception e) {
             log.error("[createDatabase alter] {}", e.getMessage());
+        }
+    }
+
+    private void createMySqlDatabase(DataSourceManagementDto dto) throws ClassNotFoundException {
+        String url = getHostUrl(dto.getUrl());
+        String dbName = dto.getDbName();
+        String username = dto.getUsername();
+        String password = dto.getPassword();
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            Statement statement = connection.createStatement();
+            String query = "CREATE DATABASE IF NOT EXISTS " + dbName;
+            statement.execute(query);
+        } catch (Exception e) {
+            throw new RuntimeException("테이블을 생성하는데 오류가 발생했습니다.(원인: " + e.getMessage() + ")");
         }
     }
 
@@ -126,5 +153,13 @@ public class DataSourceManagementService {
         liquibase.setTestRollbackOnUpdate(liquibaseProperties.isTestRollbackOnUpdate());
 
         return liquibase;
+    }
+
+    private String getHostUrl(String url) {
+        String[] splits = url.split("://");
+        String tempUrl = "protocol://" + splits[1];
+        URI uri = URI.create(tempUrl);
+
+        return splits[0] + "://" + uri.getHost() + ":" + uri.getPort();
     }
 }
