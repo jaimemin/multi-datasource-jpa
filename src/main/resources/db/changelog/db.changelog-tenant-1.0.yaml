@@ -30,4 +30,4 @@ databaseChangeLog:
     - sql:
         dbms: 'postgresql'
         sql: >-
-            ALTER SEQUENCE product_id_seq RESTART WITH 100000;
+            ALTER SEQUENCE product_id_seq RESTART WITH 1;
