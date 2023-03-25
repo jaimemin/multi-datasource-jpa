@@ -19,8 +19,8 @@ multitenancy:
             packages: com.tistory.jaimemin.multidatasourcejpa.multitenancy.entity
         datasource:
             url: jdbc:postgresql://localhost:5432/multi_tenancy_master
-            username: trycatch
-            password: catch!123
+            username: postgres
+            password: 1q2w3e4r
         liquibase:
             enabled: false
     tenant:
