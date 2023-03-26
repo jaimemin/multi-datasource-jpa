@@ -2,7 +2,7 @@
 ---
 서버를 기동하기 전 아래 내용이 선제적으로 적용되어 있어야 합니다.
 
-PostgreSQL > multi_tenancy_master 데이터베이스 내 data_source_config 테이블 생성
+PostgreSQL > multi_tenancy_master 데이터베이스  data_source_config 테이블 생성
 
 ```
 create table data_source_config
