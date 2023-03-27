@@ -20,3 +20,5 @@ create table data_source_config
 alter table data_source_config
     owner to postgres;
 ```
+
+프로젝트 관련 상세 설명: https://jaimemin.tistory.com/2270
